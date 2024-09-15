@@ -1,5 +1,9 @@
+using Eutonies.DNS.Configuration;
+using Eutonies.DNS.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Options;
+
+namespace Eutonies.DNS;
 
 public static class DependencyInjection 
 {
@@ -16,8 +20,8 @@ public static class DependencyInjection
     public static WebApplicationBuilder AddHttpClients(this WebApplicationBuilder builder) 
     {
         builder.Services.AddHttpClient<ICloudflareDnsService, CloudflareDnsService>(configureClient: ConfigureCloudflareClient)
-            .ConfigurePrimaryHttpMessageHandler(ConfigureCloudflarePrimaryMessageHandler)
-        ;
+            .ConfigurePrimaryHttpMessageHandler(ConfigureCloudflarePrimaryMessageHandler);
+        builder.Services.AddHttpClient<IPublicIpAddressFinder, PublicIpAddressFinder>();    
         return builder;
     }
 
@@ -26,10 +30,11 @@ public static class DependencyInjection
     private static void ConfigureCloudflareClient(IServiceProvider services, HttpClient client)
     {
         var conf = services.GetRequiredService<IOptions<DnsConfiguration>>().Value;
-        client.BaseAddress = new Uri($"{conf.Cloudflare.BaseUrl}/{conf.Cloudflare.ZoneId}/");
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {conf.Cloudflare.ClientKey}");
-        client.DefaultRequestHeaders.Add("X-Auth-Key", $"{conf.Cloudflare.ClientKey}");
-        client.DefaultRequestHeaders.Add("ContentType", $"application/json");
+        client.BaseAddress = new System.Uri($"{conf.Cloudflare.BaseUrl}/{conf.Cloudflare.ZoneId}/");
+        //client.BaseAddress = new System.Uri($"{conf.Cloudflare.BaseUrl}");
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {conf.Cloudflare.EditZoneDNSToken}");
+        //client.DefaultRequestHeaders.Add("X-Auth-Key", $"{conf.Cloudflare.ClientKey}");
+        //client.DefaultRequestHeaders.Add("ContentType", $"application/json");
     }
 
     private static void ConfigureCloudflarePrimaryMessageHandler(HttpMessageHandler handler, IServiceProvider services)
