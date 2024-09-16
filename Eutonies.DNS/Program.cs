@@ -1,18 +1,13 @@
 using Eutonies.DNS;
-using Eutonies.DNS.Services;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSystemd();
+builder.Logging.AddLog4Net(log4NetConfigFile: "log4net.config");
 builder
    .AddConfiguration()
-   .AddHttpClients();
+   .AddHttpClients()
+   .AddServices();
 
 var app = builder.Build();
-
-var ipFinder = app.Services.GetRequiredService<IPublicIpAddressFinder>();
-var ip = await ipFinder.FindPublicIp();
-
-var cloudflareService = app.Services.GetRequiredService<ICloudflareDnsService>();
-await cloudflareService.UpdateDnsSettings(ip);
 
 app.Run();

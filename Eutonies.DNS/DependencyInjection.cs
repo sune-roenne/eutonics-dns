@@ -25,6 +25,13 @@ public static class DependencyInjection
         return builder;
     }
 
+    public static WebApplicationBuilder AddServices(this WebApplicationBuilder builder) 
+    {
+        builder.Services.AddSingleton<IDnsRecordUpdater, DnsRecordUpdater>();
+        builder.Services.AddHostedService<DnsUpdaterBackgroundWorker>();
+        return builder;
+    }
+
 
 
     private static void ConfigureCloudflareClient(IServiceProvider services, HttpClient client)

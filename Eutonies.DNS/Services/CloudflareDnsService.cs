@@ -8,17 +8,17 @@ internal class CloudflareDnsService : ICloudflareDnsService
 {
 
     private readonly HttpClient _client;
-    private readonly CloudflareConfiguration _conf;
+    private readonly ILogger<CloudflareDnsService> _logger;
     private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions {
         DictionaryKeyPolicy = JsonNamingPolicy.SnakeCaseLower,
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         PropertyNameCaseInsensitive = true
    };
 
-    public CloudflareDnsService(HttpClient client, IOptions<CloudflareConfiguration> conf)
+    public CloudflareDnsService(HttpClient client, ILogger<CloudflareDnsService> logger)
     {
         _client = client;
-        _conf = conf.Value;
+        _logger = logger;
     }
 
     public async Task UpdateDnsSettings(string publicIp)
@@ -34,9 +34,13 @@ internal class CloudflareDnsService : ICloudflareDnsService
         if(currentIp != publicIp) 
         {
             var patchResult = await _client.PatchAsJsonAsync($"dns_records/{currentRecord.Id}",new DnsRecordPatchDocument(publicIp));
+          _logger.LogInformation($"Updating IP from: {currentIp} to {publicIp} finished with status code: {patchResult.StatusCode}");
+
+        }
+        else {
+          _logger.LogInformation("IP Address unchanged... Will do nothing");
         }
 
-        var tessa = "{https://api.cloudflare.com/client/v4/zones/2ec7cec85244ca284bd257036167bad9/dns_records}";
     }
     
     private record DnsListResult(
